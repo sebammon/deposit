@@ -2,6 +2,11 @@
 .idea/
 .env
 
+# Firebase
+.firebase/
+.firebaserc
+firebase.json
+
 # dependencies
 /node_modules
 /.pnp
