@@ -1,13 +1,14 @@
 # Deposit
 
-A simple Dropbox clone using Google's Firebase.
+A simple file deposit using Google's Firebase.
 
 ## Setup
 
+* Create Firebase project
 * Get dependencies using yarn: `yarn install`
 * Create a `.env` file
 
-The `.env` file should have these details:
+The `.env` file should have these details (from the Firebase project):
 
 ```
 REACT_APP_API_KEY=somevalue
