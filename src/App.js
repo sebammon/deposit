@@ -1,25 +1,122 @@
-import logo from './logo.svg';
-import './App.css';
+import {useContext, useEffect, useState} from "react";
+import {FirebaseContext} from "./contexts";
+import Moment from 'react-moment';
+
+const createRow = (onDelete, onDownload) => (doc) => {
+    const {id, title, created, filesCount} = doc
+
+    const handleDelete = () => onDelete && onDelete(doc)
+
+    const handleDownload = () => onDownload && onDownload(doc)
+
+    return (
+        <tr key={id}>
+            <td>{title}</td>
+            <td>
+                <Moment interval={30} fromNow={true}>
+                    {created.toDate()}
+                </Moment>
+            </td>
+            <td>{filesCount}</td>
+            <td>
+                <ActionButtons onDelete={handleDelete} onDownload={handleDownload}/>
+            </td>
+        </tr>
+    );
+};
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [deposits, setDeposits] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
+    const firebase = useContext(FirebaseContext)
+
+    useEffect(() => {
+        // noinspection UnnecessaryLocalVariableJS
+        const unsubscribe = firebase.subscribeToDeposits(docs => setDeposits(docs.map(doc => ({
+            ...doc,
+            filesCount: doc.files.length || 0
+        }))))
+
+        return unsubscribe
+    })
+
+    const handleDelete = (doc) => firebase.deleteDeposit(doc)
+
+    const handleDownload = (doc) => firebase.downloadFiles(doc)
+
+    return (
+        <div className={'container'}>
+            <section>
+                <hgroup>
+                    <h1>Create</h1>
+                    <h2>Create a new deposit.</h2>
+                </hgroup>
+                <form onSubmit={e => {
+                    e.preventDefault()
+                    setIsLoading(true)
+
+                    firebase.uploadDeposit(e.target.title.value, e.target.files.files)
+                        .then(() => {
+                            e.target.reset();
+                        })
+                        .catch(err => {
+                            window.alert(err.message)
+                        }).finally(() => {
+                        setIsLoading(false)
+                    })
+                }}>
+                    <div className={'grid'}>
+                        <label htmlFor={'title'}>
+                            <input id={'title'} name={'title'} type={'text'} placeholder={'Title'}
+                                   required={true}/>
+                            <small>Give this deposit a nice name</small>
+                        </label>
+                        <label htmlFor={'files'}>
+                            <input id={'files'} name={'files'} type={'file'} required={true} multiple={true}/>
+                        </label>
+                    </div>
+                    <button aria-busy={isLoading} type="submit">Submit</button>
+                    <button className={'secondary'} type="reset">Reset</button>
+                </form>
+            </section>
+            <section>
+                <hgroup>
+                    <h1>Download</h1>
+                    <h2>Download or delete any existing deposits.</h2>
+                </hgroup>
+                <table role={'grid'}>
+                    <thead>
+                    <tr>
+                        <th scope={'col'}>Title</th>
+                        <th scope={'col'}>Created</th>
+                        <th scope={'col'}># Files</th>
+                        <th scope={'col'}>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {deposits.map(createRow(handleDelete, handleDownload))}
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    );
+}
+
+
+function ActionButtons({onDownload, onDelete}) {
+    return (
+        <div className={'grid'}>
+            <button onClick={onDownload}>Download</button>
+            <button className={'secondary'} onClick={() => {
+                const confirmation = window.confirm('Are you sure you want to delete this deposit?');
+
+                if (confirmation) {
+                    onDelete && onDelete()
+                }
+            }}>Delete
+            </button>
+        </div>
+    );
 }
 
 export default App;
