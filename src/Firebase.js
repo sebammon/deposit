@@ -1,20 +1,20 @@
 import { initializeApp } from 'firebase/app';
 import {
+  deleteObject,
+  getBlob,
   getStorage,
   ref,
   uploadBytes,
-  deleteObject,
-  getBlob,
 } from 'firebase/storage';
 import {
   collection,
+  deleteDoc,
   doc,
   getFirestore,
   onSnapshot,
   orderBy,
   query,
   setDoc,
-  deleteDoc,
 } from 'firebase/firestore';
 import JSZip from 'jszip';
 import FileSaver from 'file-saver';
@@ -28,6 +28,8 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_APP_ID,
 };
 
+const getFileName = (str) => str.split('/').slice(1).join('/');
+
 class Firebase {
   constructor() {
     this.app = initializeApp(firebaseConfig);
@@ -36,20 +38,27 @@ class Firebase {
   }
 
   async downloadFiles({ files }) {
-    const zip = new JSZip();
     const blobs = await Promise.all(
       files.map((file) => getBlob(ref(this.storage, file)))
     );
 
-    blobs.forEach((blob, index) => {
-      const fileName = files[index].split('/').slice(1).join('/');
-      zip.file(fileName, blob);
-    });
+    let file;
+    let fileName;
 
-    const zipFile = await zip.generateAsync();
-    const fileName = `combined-${new Date().getTime()}.zip`;
+    if (blobs.length > 1) {
+      const zip = new JSZip();
+      blobs.forEach((blob, index) => {
+        const fileName = getFileName(files[index]);
+        zip.file(fileName, blob);
+      });
+      file = await zip.generateAsync({ type: 'blob' });
+      fileName = `combined-${new Date().getTime()}.zip`;
+    } else {
+      file = blobs[0];
+      fileName = getFileName(files[0]);
+    }
 
-    return FileSaver.saveAs(zipFile, fileName);
+    return FileSaver.saveAs(file, fileName);
   }
 
   async deleteDeposit({ id, files }) {
