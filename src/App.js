@@ -111,17 +111,21 @@ function App() {
           <h1>Download</h1>
           <h2>Download or delete any existing deposits.</h2>
         </hgroup>
-        <table role={'grid'}>
-          <thead>
-            <tr>
-              <th scope={'col'}>Title</th>
-              <th scope={'col'}>Created</th>
-              <th scope={'col'}># Files</th>
-              <th scope={'col'}>Action</th>
-            </tr>
-          </thead>
-          <tbody>{deposits.map(createRow(handleDelete, handleDownload))}</tbody>
-        </table>
+        <figure>
+          <table role={'grid'}>
+            <thead>
+              <tr>
+                <th scope={'col'}>Title</th>
+                <th scope={'col'}>Created</th>
+                <th scope={'col'}># Files</th>
+                <th scope={'col'}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deposits.map(createRow(handleDelete, handleDownload))}
+            </tbody>
+          </table>
+        </figure>
       </section>
     </div>
   );
@@ -129,7 +133,7 @@ function App() {
 
 function ActionButtons({ onDownload, onDelete }) {
   return (
-    <div className={'grid'}>
+    <div className={'button-group'}>
       <button onClick={onDownload}>Download</button>
       <button
         className={'secondary'}

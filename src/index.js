@@ -5,6 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import Firebase from './Firebase';
 import { FirebaseContext } from './contexts';
+import './index.css';
 
 const firebase = new Firebase();
 
