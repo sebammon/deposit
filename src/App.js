@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { FirebaseContext } from './contexts';
 import Moment from 'react-moment';
 
@@ -30,19 +30,23 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const firebase = useContext(FirebaseContext);
 
-  useEffect(() => {
-    // noinspection UnnecessaryLocalVariableJS
-    const unsubscribe = firebase.subscribeToDeposits((docs) =>
+  const subscriptionCallback = useCallback(
+    (docs) =>
       setDeposits(
         docs.map((doc) => ({
           ...doc,
           filesCount: doc.files.length || 0,
         }))
-      )
-    );
+      ),
+    []
+  );
+
+  useEffect(() => {
+    // noinspection UnnecessaryLocalVariableJS
+    const unsubscribe = firebase.subscribeToDeposits(subscriptionCallback);
 
     return unsubscribe;
-  });
+  }, [firebase, subscriptionCallback]);
 
   const handleDelete = (doc) => firebase.deleteDeposit(doc);
 
