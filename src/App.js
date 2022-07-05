@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { FirebaseContext } from './contexts';
 import Moment from 'react-moment';
 
-const createRow = (onDelete, onDownload) => (doc) => {
+const createRow = (onDelete, onDownload, isLoading) => (doc) => {
   const { id, title, created, filesCount } = doc;
 
   const handleDelete = () => onDelete && onDelete(doc);
@@ -19,7 +19,11 @@ const createRow = (onDelete, onDownload) => (doc) => {
       </td>
       <td>{filesCount}</td>
       <td>
-        <ActionButtons onDelete={handleDelete} onDownload={handleDownload} />
+        <ActionButtons
+          isLoading={isLoading}
+          onDelete={handleDelete}
+          onDownload={handleDownload}
+        />
       </td>
     </tr>
   );
@@ -28,6 +32,7 @@ const createRow = (onDelete, onDownload) => (doc) => {
 function App() {
   const [deposits, setDeposits] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const firebase = useContext(FirebaseContext);
 
   const subscriptionCallback = useCallback(
@@ -50,7 +55,11 @@ function App() {
 
   const handleDelete = (doc) => firebase.deleteDeposit(doc);
 
-  const handleDownload = (doc) => firebase.downloadFiles(doc);
+  const handleDownload = (doc) => {
+    setIsDownloading(true);
+
+    return firebase.downloadFiles(doc).finally(() => setIsDownloading(false));
+  };
 
   return (
     <div className={'container'}>
@@ -98,7 +107,7 @@ function App() {
               />
             </label>
           </div>
-          <button aria-busy={isLoading} type="submit">
+          <button aria-busy={isLoading} disabled={isLoading} type="submit">
             Submit
           </button>
           <button className={'secondary'} type="reset">
@@ -122,7 +131,9 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {deposits.map(createRow(handleDelete, handleDownload))}
+              {deposits.map(
+                createRow(handleDelete, handleDownload, isDownloading)
+              )}
             </tbody>
           </table>
         </figure>
@@ -131,10 +142,12 @@ function App() {
   );
 }
 
-function ActionButtons({ onDownload, onDelete }) {
+function ActionButtons({ onDownload, onDelete, isLoading }) {
   return (
     <div className={'button-group'}>
-      <button onClick={onDownload}>Download</button>
+      <button onClick={onDownload} aria-busy={isLoading} disabled={isLoading}>
+        Download
+      </button>
       <button
         className={'secondary'}
         onClick={() => {
