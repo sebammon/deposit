@@ -19,6 +19,11 @@ root.render(
             <strong>Deposit</strong>
           </li>
         </ul>
+        <ul>
+          <li>
+            <a href="https://github.com/sebammon/deposit">GitHub</a>
+          </li>
+        </ul>
       </nav>
       <App />
     </FirebaseContext.Provider>

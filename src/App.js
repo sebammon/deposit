@@ -2,8 +2,10 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { FirebaseContext } from './contexts';
 import Moment from 'react-moment';
 
-const createRow = (onDelete, onDownload, isLoading) => (doc) => {
+const createRow = (onDelete, onDownload, isDownloadingId) => (doc) => {
   const { id, title, created, filesCount } = doc;
+
+  const isDownloading = isDownloadingId === id;
 
   const handleDelete = () => onDelete && onDelete(doc);
 
@@ -20,7 +22,7 @@ const createRow = (onDelete, onDownload, isLoading) => (doc) => {
       <td>{filesCount}</td>
       <td>
         <ActionButtons
-          isLoading={isLoading}
+          isDownloading={isDownloading}
           onDelete={handleDelete}
           onDownload={handleDownload}
         />
@@ -32,7 +34,7 @@ const createRow = (onDelete, onDownload, isLoading) => (doc) => {
 function App() {
   const [deposits, setDeposits] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingId, setIsDownloadingId] = useState(false);
   const firebase = useContext(FirebaseContext);
 
   const subscriptionCallback = useCallback(
@@ -56,9 +58,9 @@ function App() {
   const handleDelete = (doc) => firebase.deleteDeposit(doc);
 
   const handleDownload = (doc) => {
-    setIsDownloading(true);
+    setIsDownloadingId(doc.id);
 
-    return firebase.downloadFiles(doc).finally(() => setIsDownloading(false));
+    return firebase.downloadFiles(doc).finally(() => setIsDownloadingId(null));
   };
 
   return (
@@ -132,7 +134,7 @@ function App() {
             </thead>
             <tbody>
               {deposits.map(
-                createRow(handleDelete, handleDownload, isDownloading)
+                createRow(handleDelete, handleDownload, isDownloadingId)
               )}
             </tbody>
           </table>
@@ -142,10 +144,14 @@ function App() {
   );
 }
 
-function ActionButtons({ onDownload, onDelete, isLoading }) {
+function ActionButtons({ onDownload, onDelete, isDownloading }) {
   return (
     <div className={'button-group'}>
-      <button onClick={onDownload} aria-busy={isLoading} disabled={isLoading}>
+      <button
+        onClick={onDownload}
+        aria-busy={isDownloading}
+        disabled={isDownloading}
+      >
         Download
       </button>
       <button
